@@ -79,6 +79,26 @@ func healthCheckAll() {
 	tunnel.HealthCheckAll()
 }
 
+//export queryAllProxies
+func queryAllProxies() *C.char {
+	return marshalJson(tunnel.QueryAllProxies())
+}
+
+//export speedTest
+func speedTest(mode C.c_string) *C.char {
+	return marshalJson(tunnel.SpeedTest(C.GoString(mode)))
+}
+
+//export autoSelectProxy
+func autoSelectProxy(name C.c_string) *C.char {
+	group := tunnel.AutoSelectProxy(C.GoString(name))
+	if group == "" {
+		return nil
+	}
+
+	return C.CString(group)
+}
+
 //export patchSelector
 func patchSelector(selector, name C.c_string) C.int {
 	s := C.GoString(selector)

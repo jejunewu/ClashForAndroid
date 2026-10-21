@@ -16,11 +16,11 @@ import kotlinx.coroutines.withContext
 
 class ProxyPageAdapter(
     private val surface: Surface,
-    private val config: ProxyViewConfig,
+    private val configs: List<ProxyViewConfig>,
     private val adapters: List<ProxyAdapter>,
     private val stateChanged: (Int) -> Unit,
 ) : RecyclerView.Adapter<ProxyPageFactory.Holder>() {
-    private val factory = ProxyPageFactory(config)
+    private val factories = configs.map { ProxyPageFactory(it) }
     private var parent: RecyclerView? = null
 
     val states = List(adapters.size) { ProxyPageState() }
@@ -32,6 +32,8 @@ class ProxyPageAdapter(
         parent: ProxyState,
         links: Map<String, ProxyState>
     ) {
+        val config = configs[position]
+
         val states = withContext(Dispatchers.Default) {
             proxies.map {
                 val link = if (it.type.group) links[it.name] else null
@@ -51,12 +53,19 @@ class ProxyPageAdapter(
     }
 
     fun requestRedrawVisible() {
-        factory.fromRoot(parent?.firstVisibleView ?: return)
-            .recyclerView.invalidateChildren()
+        val root = parent?.firstVisibleView ?: return
+        val holder = root.tag as? ProxyPageFactory.Holder ?: return
+
+        holder.recyclerView.invalidateChildren()
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return position
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProxyPageFactory.Holder {
-        val holder = factory.newInstance()
+        val config = configs[viewType]
+        val holder = factories[viewType].newInstance()
 
         val toolbarHeight = config.context.getPixels(R.dimen.toolbar_height)
         val tabHeight = config.context.getPixels(R.dimen.tab_layout_height)

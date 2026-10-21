@@ -126,6 +126,20 @@ object Clash {
         Bridge.nativeHealthCheckAll()
     }
 
+    fun queryAllProxies(): ProxyGroup {
+        return Bridge.nativeQueryAllProxies()
+            .let { Json.Default.decodeFromString(ProxyGroup.serializer(), it) }
+    }
+
+    fun speedTest(mode: SpeedTestMode): ProxyGroup {
+        return Bridge.nativeSpeedTest(mode.name)
+            .let { Json.Default.decodeFromString(ProxyGroup.serializer(), it) }
+    }
+
+    fun autoSelectProxy(name: String): String? {
+        return Bridge.nativeAutoSelectProxy(name)
+    }
+
     fun patchSelector(selector: String, name: String): Boolean {
         return Bridge.nativePatchSelector(selector, name)
     }

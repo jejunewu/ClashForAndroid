@@ -12,6 +12,11 @@ data class Proxy(
     val subtitle: String,
     val type: Type,
     val delay: Int,
+    val region: String = "",
+    val download: Long = -1,
+    val upload: Long = -1,
+    val error: String = "",
+    val speedTested: Boolean = false,
 ) : Parcelable {
     @Suppress("unused")
     enum class Type(val group: Boolean) {

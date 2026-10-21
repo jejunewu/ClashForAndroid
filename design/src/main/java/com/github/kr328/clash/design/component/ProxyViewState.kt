@@ -6,6 +6,7 @@ import android.graphics.Path
 import android.graphics.Rect
 import com.github.kr328.clash.core.model.Proxy
 import com.github.kr328.clash.design.model.ProxyState
+import java.util.Locale
 import kotlin.math.absoluteValue
 import kotlin.math.max
 
@@ -25,18 +26,34 @@ class ProxyViewState(
     var background: Int = config.unselectedBackground
     var controls: Int = config.unselectedControl
 
-    private var delay: Int = 0
+    private var delay: Int = Int.MIN_VALUE
     private var selected: Boolean = false
     private var parentNow: String = ""
     private var linkNow: String? = null
 
     private var lastFrameTime = System.currentTimeMillis()
 
+    private val autoTitle: String? =
+        if (proxy.speedTested) proxy.title.ifEmpty { proxy.name } else null
+    private val autoSubtitle: String? =
+        if (proxy.speedTested) {
+            "%s · ↓%s ↑%s".format(
+                proxy.region.ifEmpty { "--" },
+                formatSpeed(proxy.download),
+                formatSpeed(proxy.upload)
+            )
+        } else {
+            null
+        }
+
     fun update(snap: Boolean): Boolean {
         val frameTime = System.currentTimeMillis()
         var invalidate = false
 
-        if (proxy.type.group) {
+        if (autoSubtitle != null) {
+            title = autoTitle ?: proxy.name
+            subtitle = autoSubtitle
+        } else if (proxy.type.group) {
             title = proxy.name
 
             if (link == null) {
@@ -58,7 +75,13 @@ class ProxyViewState(
 
         if (delay != proxy.delay) {
             delay = proxy.delay
-            delayText = if (proxy.delay in 0..Short.MAX_VALUE) proxy.delay.toString() else ""
+            delayText = if (proxy.delay in 0..Short.MAX_VALUE) {
+                if (proxy.speedTested) "${proxy.delay}ms" else proxy.delay.toString()
+            } else if (proxy.speedTested) {
+                "--"
+            } else {
+                ""
+            }
         }
 
         if (parentNow !== parent.now) {
@@ -123,5 +146,35 @@ class ProxyViewState(
         lastFrameTime = frameTime
 
         return invalidate
+    }
+
+    private fun formatSpeed(bytesPerSecond: Long): String {
+        if (bytesPerSecond < 0) {
+            return "--"
+        }
+
+        val value: Double
+        val unit: String
+
+        when {
+            bytesPerSecond >= 1024 * 1024 -> {
+                value = bytesPerSecond / 1024.0 / 1024.0
+                unit = "MB/s"
+            }
+            bytesPerSecond >= 1024 -> {
+                value = bytesPerSecond / 1024.0
+                unit = "KB/s"
+            }
+            else -> {
+                value = bytesPerSecond.toDouble()
+                unit = "B/s"
+            }
+        }
+
+        return if (value >= 100) {
+            String.format(Locale.ROOT, "%.0f%s", value, unit)
+        } else {
+            String.format(Locale.ROOT, "%.1f%s", value, unit)
+        }
     }
 }

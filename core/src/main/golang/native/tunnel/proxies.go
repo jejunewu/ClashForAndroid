@@ -24,11 +24,16 @@ const (
 )
 
 type Proxy struct {
-	Name     string `json:"name"`
-	Title    string `json:"title"`
-	Subtitle string `json:"subtitle"`
-	Type     string `json:"type"`
-	Delay    int    `json:"delay"`
+	Name        string `json:"name"`
+	Title       string `json:"title"`
+	Subtitle    string `json:"subtitle"`
+	Type        string `json:"type"`
+	Delay       int    `json:"delay"`
+	Region      string `json:"region"`
+	Download    int64  `json:"download"`
+	Upload      int64  `json:"upload"`
+	Error       string `json:"error,omitempty"`
+	SpeedTested bool   `json:"speedTested"`
 }
 
 type ProxyGroup struct {
@@ -183,11 +188,15 @@ func collectProviders(providers []provider.ProxyProvider, uiSubtitlePattern *reg
 			}
 
 			result = append(result, &Proxy{
-				Name:     name,
-				Title:    strings.TrimSpace(title),
-				Subtitle: strings.TrimSpace(subtitle),
-				Type:     px.Type().String(),
-				Delay:    int(px.LastDelay()),
+				Name:        name,
+				Title:       strings.TrimSpace(title),
+				Subtitle:    strings.TrimSpace(subtitle),
+				Type:        px.Type().String(),
+				Delay:       int(px.LastDelay()),
+				Region:      detectRegion(name),
+				Download:    -1,
+				Upload:      -1,
+				SpeedTested: false,
 			})
 		}
 	}

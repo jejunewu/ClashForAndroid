@@ -34,6 +34,10 @@ class ClashManager(private val context: Context) : IClashManager,
         return Clash.queryGroup(name, proxySort)
     }
 
+    override fun queryAllProxies(): ProxyGroup {
+        return Clash.queryAllProxies()
+    }
+
     override fun queryConfiguration(): UiConfiguration {
         return Clash.queryConfiguration()
     }
@@ -58,6 +62,17 @@ class ClashManager(private val context: Context) : IClashManager,
         }
     }
 
+    override fun autoSelectProxy(name: String): String? {
+        val group = Clash.autoSelectProxy(name) ?: return null
+        val current = store.activeProfile
+
+        if (current != null) {
+            SelectionDao().setSelected(Selection(current, group, name))
+        }
+
+        return group
+    }
+
     override fun patchOverride(slot: Clash.OverrideSlot, configuration: ConfigurationOverride) {
         Clash.patchOverride(slot, configuration)
 
@@ -70,6 +85,12 @@ class ClashManager(private val context: Context) : IClashManager,
 
     override suspend fun healthCheck(group: String) {
         return Clash.healthCheck(group).await()
+    }
+
+    override suspend fun speedTest(mode: SpeedTestMode): ProxyGroup {
+        return withContext(Dispatchers.IO) {
+            Clash.speedTest(mode)
+        }
     }
 
     override suspend fun updateProvider(type: Provider.Type, name: String) {

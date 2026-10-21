@@ -196,6 +196,40 @@ Java_com_github_kr328_clash_core_bridge_Bridge_nativeHealthCheckAll(JNIEnv *env,
     healthCheckAll();
 }
 
+JNIEXPORT jstring JNICALL
+Java_com_github_kr328_clash_core_bridge_Bridge_nativeQueryAllProxies(JNIEnv *env, jobject thiz) {
+    TRACE_METHOD();
+
+    scoped_string response = queryAllProxies();
+
+    return new_string(response);
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_github_kr328_clash_core_bridge_Bridge_nativeSpeedTest(JNIEnv *env, jobject thiz,
+                                                               jstring mode) {
+    TRACE_METHOD();
+
+    scoped_string _mode = get_string(mode);
+    scoped_string response = speedTest(_mode);
+
+    return new_string(response);
+}
+
+JNIEXPORT jstring JNICALL
+Java_com_github_kr328_clash_core_bridge_Bridge_nativeAutoSelectProxy(JNIEnv *env, jobject thiz,
+                                                                     jstring name) {
+    TRACE_METHOD();
+
+    scoped_string _name = get_string(name);
+    scoped_string response = autoSelectProxy(_name);
+
+    if (response == NULL)
+        return NULL;
+
+    return new_string(response);
+}
+
 JNIEXPORT jboolean JNICALL
 Java_com_github_kr328_clash_core_bridge_Bridge_nativePatchSelector(JNIEnv *env, jobject thiz,
                                                                    jstring selector, jstring name) {

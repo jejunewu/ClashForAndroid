@@ -258,6 +258,21 @@
     <string name="more">More</string>
     <string name="save">Save</string>
     <string name="delay_test">Delay Test</string>
+    <string name="auto_select_proxy">Auto Select</string>
+    <string name="speed_test_download">Download speed</string>
+    <string name="speed_test_upload">Upload speed</string>
+    <string name="speed_test_latency">Latency</string>
+    <string name="speed_test_download_short">Download</string>
+    <string name="speed_test_upload_short">Upload</string>
+    <string name="speed_test_latency_short">Latency</string>
+    <string name="sort_global">Global sort</string>
+    <string name="sort_region">Region sort</string>
+    <string name="sort_global_short">Global</string>
+    <string name="sort_region_short">Region</string>
+    <string name="speed_test_failed">Speed test failed</string>
+    <string name="auto_selected_best">Auto-selected best node: %1$s</string>
+    <string name="auto_select_failed">Unable to select this node from the current proxy group</string>
+    <string name="speed_testing_all">Testing all nodes…</string>
 
     <string name="format_provider_type">%1$s(%2$s)</string>
     <string name="rule">Rule</string>
