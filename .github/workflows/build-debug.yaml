@@ -1,0 +1,52 @@
+name: Build FOSS Debug APK
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.18.10"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK components
+        run: |
+          yes | sdkmanager --licenses > /dev/null
+          sdkmanager --install \
+            "platforms;android-31" \
+            "build-tools;32.0.0" \
+            "ndk;23.0.7599858" \
+            "cmake;3.18.1"
+
+      - name: Build FOSS debug APK
+        run: ./gradlew --no-daemon app:assembleFossDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: cfa-2.5.12-foss-debug
+          path: app/build/outputs/apk/foss/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
