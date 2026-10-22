@@ -1,0 +1,135 @@
+name: Build and Publish Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: "1.18.10"
+
+      - name: Install Android SDK components
+        run: |
+          sdkmanager_bin="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort | tail -n 1)"
+          yes | "$sdkmanager_bin" --licenses > /dev/null
+          "$sdkmanager_bin" --install \
+            "platforms;android-31" \
+            "build-tools;32.0.0" \
+            "ndk;23.0.7599858" \
+            "cmake;3.18.1"
+
+      - name: Configure release signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "Android release signing secrets are not configured" >&2
+            exit 1
+          fi
+
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/clash-forge-release.p12"
+          cat > signing.properties <<EOF
+          keystore.path=$RUNNER_TEMP/clash-forge-release.p12
+          keystore.password=$KEYSTORE_PASSWORD
+          key.alias=$KEY_ALIAS
+          key.password=$KEY_PASSWORD
+          store.type=PKCS12
+          EOF
+
+      - name: Build release APK
+        run: ./gradlew --no-daemon app:assembleFossRelease
+
+      - name: Verify and prepare release asset
+        run: |
+          set -euo pipefail
+
+          apk_dir="app/build/outputs/apk/foss/release"
+          source_apk="$(find "$apk_dir" -maxdepth 1 -type f -name '*universal*.apk' | head -n 1)"
+          if [ -z "$source_apk" ]; then
+            source_apk="$(find "$apk_dir" -maxdepth 1 -type f -name '*.apk' | head -n 1)"
+          fi
+          if [ -z "$source_apk" ]; then
+            echo "No release APK was produced" >&2
+            exit 1
+          fi
+
+          mkdir -p release
+          apk="release/ClashForAndroid-2.5.12-forge.1.apk"
+          cp "$source_apk" "$apk"
+
+          aapt_bin="$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort | tail -n 1)"
+          version_name="$("$aapt_bin" dump badging "$apk" | sed -n "s/^package: name='[^']*' versionCode='[^']*' versionName='\([^']*\)'.*/\1/p" | head -n 1)"
+          echo "APK versionName: $version_name"
+          test "$version_name" = "2.5.12-forge.1"
+
+          apksigner_bin="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort | tail -n 1)"
+          "$apksigner_bin" verify --verbose --print-certs "$apk"
+
+          (cd release && sha256sum "ClashForAndroid-2.5.12-forge.1.apk" > "ClashForAndroid-2.5.12-forge.1.apk.sha256")
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: cfa-2.5.12-forge.1-release
+          path: release/*
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          tag="v2.5.12-forge.1"
+          notes="$(cat <<'EOF'
+          ## ClashForAndroid 2.5.12-forge.1
+
+          基于 ClashForAndroid 2.5.12 的个人定制构建。
+
+          ### 功能
+          - 【代理】新增“自动选择代理”
+          - 支持下载速度、上传速度、延迟三种测速方式
+          - 并发测速，整体时间控制在 30 秒内
+          - 支持全部排序与区域排序，可一键切换
+          - 节点单行展示，同区域使用相同背景色
+          - 修复排序模式未实际生效的问题
+
+          ### 安装说明
+          - 最低支持 Android 5.0。
+          - 此版本使用独立正式签名，若与已安装版本签名冲突，请先备份数据并卸载旧版。
+          EOF
+          )"
+
+          if gh release view "$tag" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload "$tag" release/* -R "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$tag" release/* \
+              -R "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "ClashForAndroid 2.5.12-forge.1" \
+              --notes "$notes" \
+              --latest
+          fi

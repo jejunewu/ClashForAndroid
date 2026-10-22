@@ -105,6 +105,7 @@ subprojects {
                     storePassword = prop.getProperty("keystore.password")!!
                     keyAlias = prop.getProperty("key.alias")!!
                     keyPassword = prop.getProperty("key.password")!!
+                    storeType = prop.getProperty("store.type", "JKS")
                 }
             }
         }
