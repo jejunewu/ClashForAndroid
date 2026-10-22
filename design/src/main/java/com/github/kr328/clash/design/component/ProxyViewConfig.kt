@@ -9,7 +9,7 @@ import com.github.kr328.clash.design.util.resolveThemedResourceId
 
 class ProxyViewConfig(val context: Context, var singleLine: Boolean) {
     private val colorSurface = context.resolveThemedColor(R.attr.colorSurface)
-    private val regionColorCache = mutableMapOf<String, Int>()
+    private val regionBorderColorCache = mutableMapOf<String, Int>()
     private val darkTheme = relativeLuminance(colorSurface) < 0.5f
 
     val clickableBackground =
@@ -17,9 +17,6 @@ class ProxyViewConfig(val context: Context, var singleLine: Boolean) {
 
     val selectedControl = context.resolveThemedColor(R.attr.colorOnPrimary)
     val selectedBackground = context.resolveThemedColor(R.attr.colorPrimary)
-    val selectedAccent = context.resolveThemedColor(R.attr.colorPrimary)
-    val selectedRegionControl =
-        if (darkTheme) context.resolveThemedColor(R.attr.colorOnSurface) else selectedAccent
 
     val unselectedControl = context.resolveThemedColor(R.attr.colorOnSurface)
     val unselectedBackground: Int
@@ -42,17 +39,18 @@ class ProxyViewConfig(val context: Context, var singleLine: Boolean) {
 
     val selectionIndicatorWidth = 3f * context.resources.displayMetrics.density
     val selectionIndicatorInset = 8f * context.resources.displayMetrics.density
+    val regionBorderWidth = 1.5f * context.resources.displayMetrics.density
 
-    fun regionBackground(region: String): Int {
+    fun regionBorderColor(region: String): Int {
         val key = region.ifBlank { "其他" }
-        return regionColorCache.getOrPut(key) {
+        return regionBorderColorCache.getOrPut(key) {
             if (key == "其他") {
-                return@getOrPut if (darkTheme) 0xFF333333.toInt() else 0xFFF3F3F3.toInt()
+                return@getOrPut if (darkTheme) 0xFF7A7A7A.toInt() else 0xFFB8B8B8.toInt()
             }
 
             val hue = ((key.hashCode() % 360) + 360) % 360
-            val saturation = if (darkTheme) 0.33f else 0.13f
-            val value = if (darkTheme) 0.32f else 0.995f
+            val saturation = if (darkTheme) 0.55f else 0.48f
+            val value = if (darkTheme) 0.92f else 0.72f
 
             Color.HSVToColor(floatArrayOf(hue.toFloat(), saturation, value))
         }

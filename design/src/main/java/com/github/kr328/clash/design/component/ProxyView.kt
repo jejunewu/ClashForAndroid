@@ -2,6 +2,7 @@ package com.github.kr328.clash.design.component
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.view.View
@@ -76,14 +77,34 @@ class ProxyView(
 
         paint.reset()
 
-        paint.color = state.background
-        paint.style = Paint.Style.FILL
-
-        // draw background
         canvas.apply {
             if (state.config.singleLine) {
-                drawRect(0f, 0f, width, height, paint)
+                if (Color.alpha(state.background) > 0) {
+                    val path = state.path
+
+                    path.reset()
+                    path.addRoundRect(
+                        state.config.layoutPadding,
+                        state.config.layoutPadding,
+                        width - state.config.layoutPadding,
+                        height - state.config.layoutPadding,
+                        state.config.cardRadius,
+                        state.config.cardRadius,
+                        Path.Direction.CW,
+                    )
+
+                    paint.color = state.background
+                    paint.style = Paint.Style.FILL
+                    drawPath(path, paint)
+                }
+
+                if (!state.isSelected) {
+                    drawRegionBorder(canvas, state, width, height)
+                }
             } else {
+                paint.color = state.background
+                paint.style = Paint.Style.FILL
+
                 val path = state.path
 
                 path.reset()
@@ -112,6 +133,65 @@ class ProxyView(
         }
 
         super.draw(canvas)
+    }
+
+    private fun drawRegionBorder(
+        canvas: Canvas,
+        state: ProxyViewState,
+        width: Float,
+        height: Float,
+    ) {
+        val paint = state.paint
+        val left = state.config.layoutPadding
+        val right = width - state.config.layoutPadding
+        val top = if (state.regionGroupFirst) state.config.layoutPadding else 0f
+        val bottom = if (state.regionGroupLast) height - state.config.layoutPadding else height
+        val radius = state.config.cardRadius
+        val path = state.path
+
+        paint.reset()
+        paint.isAntiAlias = true
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = state.config.regionBorderWidth
+        paint.color = state.regionBorder
+
+        path.reset()
+
+        when {
+            state.regionGroupFirst && state.regionGroupLast -> path.addRoundRect(
+                left,
+                top,
+                right,
+                bottom,
+                radius,
+                radius,
+                Path.Direction.CW,
+            )
+            state.regionGroupFirst -> {
+                path.moveTo(left, bottom)
+                path.lineTo(left, top + radius)
+                path.quadTo(left, top, left + radius, top)
+                path.lineTo(right - radius, top)
+                path.quadTo(right, top, right, top + radius)
+                path.lineTo(right, bottom)
+            }
+            state.regionGroupLast -> {
+                path.moveTo(left, top)
+                path.lineTo(left, bottom - radius)
+                path.quadTo(left, bottom, left + radius, bottom)
+                path.lineTo(right - radius, bottom)
+                path.quadTo(right, bottom, right, bottom - radius)
+                path.lineTo(right, top)
+            }
+            else -> {
+                path.moveTo(left, top)
+                path.lineTo(left, bottom)
+                path.moveTo(right, top)
+                path.lineTo(right, bottom)
+            }
+        }
+
+        canvas.drawPath(path, paint)
     }
 
     override fun onDraw(canvas: Canvas) {

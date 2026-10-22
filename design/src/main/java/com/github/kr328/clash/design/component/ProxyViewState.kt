@@ -25,11 +25,18 @@ class ProxyViewState(
     var subtitle: String = ""
     var delayText: String = ""
     var background: Int = if (oneLine) {
-        config.regionBackground(proxy.region)
+        Color.TRANSPARENT
     } else {
         config.unselectedBackground
     }
     var controls: Int = config.unselectedControl
+    var regionGroupFirst: Boolean = true
+    var regionGroupLast: Boolean = true
+
+    val regionKey: String
+        get() = proxy.region.ifBlank { "其他" }
+    val regionBorder: Int
+        get() = config.regionBorderColor(regionKey)
 
     private var delay: Int = Int.MIN_VALUE
     private var selected: Boolean = false
@@ -99,7 +106,6 @@ class ProxyViewState(
         }
 
         controls = when {
-            selected && oneLine -> config.selectedRegionControl
             selected -> config.selectedControl
             else -> config.unselectedControl
         }
@@ -163,8 +169,8 @@ class ProxyViewState(
 
     private fun targetBackground(): Int {
         return when {
-            oneLine -> config.regionBackground(proxy.region)
             selected -> config.selectedBackground
+            oneLine -> Color.TRANSPARENT
             else -> config.unselectedBackground
         }
     }

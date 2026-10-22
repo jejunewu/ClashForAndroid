@@ -43,6 +43,15 @@ class ProxyPageAdapter(
             }
         }
 
+        if (config.singleLine) {
+            states.forEachIndexed { index, state ->
+                state.regionGroupFirst =
+                    index == 0 || states[index - 1].regionKey != state.regionKey
+                state.regionGroupLast =
+                    index == states.lastIndex || states[index + 1].regionKey != state.regionKey
+            }
+        }
+
         withContext(Dispatchers.Main) {
             adapters[position].apply {
                 this.selectable = selectable
