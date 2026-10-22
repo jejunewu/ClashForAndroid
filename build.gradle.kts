@@ -77,7 +77,7 @@ subprojects {
             create("foss") {
                 isDefault = true
                 dimension = flavorDimensionList[0]
-                versionNameSuffix = ".foss.1"
+                versionNameSuffix = "-forge.1"
 
                 buildConfigField("boolean", "PREMIUM", "Boolean.parseBoolean(\"false\")")
 
