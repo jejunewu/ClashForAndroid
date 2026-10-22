@@ -99,7 +99,7 @@ class ProxyViewState(
         }
 
         controls = when {
-            selected && oneLine -> config.selectedAccent
+            selected && oneLine -> config.selectedRegionControl
             selected -> config.selectedControl
             else -> config.unselectedControl
         }

@@ -18,6 +18,8 @@ class ProxyViewConfig(val context: Context, var singleLine: Boolean) {
     val selectedControl = context.resolveThemedColor(R.attr.colorOnPrimary)
     val selectedBackground = context.resolveThemedColor(R.attr.colorPrimary)
     val selectedAccent = context.resolveThemedColor(R.attr.colorPrimary)
+    val selectedRegionControl =
+        if (darkTheme) context.resolveThemedColor(R.attr.colorOnSurface) else selectedAccent
 
     val unselectedControl = context.resolveThemedColor(R.attr.colorOnSurface)
     val unselectedBackground: Int
