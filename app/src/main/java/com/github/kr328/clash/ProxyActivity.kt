@@ -97,11 +97,13 @@ class ProxyActivity : BaseActivity<ProxyDesign>() {
 
                             if (pageNames.getOrNull(request.index) == ProxyDesign.AUTO_SELECT_GROUP) {
                                 launch {
+                                    val metric = request.metric ?: design.autoSelectMetric
+                                    val sort = request.sort ?: design.autoSelectSort
                                     val group = withClash { queryAllProxies() }
                                     val sorted = sortProxies(
                                         group.proxies,
-                                        design.autoSelectMetric,
-                                        design.autoSelectSort
+                                        metric,
+                                        sort,
                                     )
 
                                     design.updateGroup(
@@ -196,7 +198,7 @@ class ProxyActivity : BaseActivity<ProxyDesign>() {
                                     val sorted = sortProxies(
                                         group.proxies,
                                         metric,
-                                        design.autoSelectSort
+                                        sort,
                                     )
 
                                     design.updateGroup(
@@ -261,7 +263,7 @@ class ProxyActivity : BaseActivity<ProxyDesign>() {
     ): List<Proxy> {
         val comparator = metricComparator(metric)
 
-        if (sort == ProxyDesign.AutoSelectSort.Global) {
+        if (sort == ProxyDesign.AutoSelectSort.All) {
             return proxies.sortedWith(comparator)
         }
 

@@ -41,7 +41,7 @@ subprojects {
             targetSdk = 31
 
             versionName = "2.5.12"
-            versionCode = 205012
+            versionCode = 205013
 
             resValue("string", "release_name", "v$versionName")
             resValue("integer", "release_code", "$versionCode")
@@ -77,7 +77,7 @@ subprojects {
             create("foss") {
                 isDefault = true
                 dimension = flavorDimensionList[0]
-                versionNameSuffix = ".foss"
+                versionNameSuffix = ".foss.1"
 
                 buildConfigField("boolean", "PREMIUM", "Boolean.parseBoolean(\"false\")")
 
@@ -120,7 +120,7 @@ subprojects {
                 )
             }
             named("debug") {
-                versionNameSuffix = ".debug"
+                versionNameSuffix = ""
             }
         }
 

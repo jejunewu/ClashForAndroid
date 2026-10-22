@@ -47,12 +47,12 @@ class ProxyViewConfig(val context: Context, var singleLine: Boolean) {
         val key = region.ifBlank { "其他" }
         return regionColorCache.getOrPut(key) {
             if (key == "其他") {
-                return@getOrPut if (darkTheme) 0xFF2B2B2B.toInt() else 0xFFEFEFEF.toInt()
+                return@getOrPut if (darkTheme) 0xFF333333.toInt() else 0xFFF3F3F3.toInt()
             }
 
             val hue = ((key.hashCode() % 360) + 360) % 360
-            val saturation = if (darkTheme) 0.38f else 0.20f
-            val value = if (darkTheme) 0.27f else 0.98f
+            val saturation = if (darkTheme) 0.33f else 0.13f
+            val value = if (darkTheme) 0.32f else 0.995f
 
             Color.HSVToColor(floatArrayOf(hue.toFloat(), saturation, value))
         }

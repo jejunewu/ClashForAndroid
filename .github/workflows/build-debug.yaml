@@ -44,7 +44,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v6
         with:
-          name: cfa-2.5.12-foss-debug
+          name: cfa-2.5.12.foss.1-debug
           path: app/build/outputs/apk/foss/debug/*.apk
           if-no-files-found: error
           retention-days: 14

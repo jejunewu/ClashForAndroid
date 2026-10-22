@@ -36,7 +36,7 @@ class ProxyDesign(
     }
 
     enum class AutoSelectSort {
-        Global, Region
+        All, Region
     }
 
     companion object {
@@ -48,7 +48,12 @@ class ProxyDesign(
         object ReLaunch : Request()
 
         data class PatchMode(val mode: TunnelState.Mode?) : Request()
-        data class Reload(val index: Int, val scrollToTop: Boolean = false) : Request()
+        data class Reload(
+            val index: Int,
+            val scrollToTop: Boolean = false,
+            val metric: AutoSelectMetric? = null,
+            val sort: AutoSelectSort? = null,
+        ) : Request()
         data class Select(val index: Int, val name: String) : Request()
         data class UrlTest(val index: Int) : Request()
     }
@@ -70,7 +75,7 @@ class ProxyDesign(
 
     var autoSelectMetric: AutoSelectMetric = AutoSelectMetric.Download
         private set
-    var autoSelectSort: AutoSelectSort = AutoSelectSort.Global
+    var autoSelectSort: AutoSelectSort = AutoSelectSort.All
         private set
 
     private var horizontalScrolling = false
@@ -170,7 +175,7 @@ class ProxyDesign(
         }
 
         binding.sortModeView.setOnClickListener {
-            showSortModeMenu()
+            toggleSortMode()
         }
 
         if (pageNames.isEmpty()) {
@@ -273,7 +278,7 @@ class ProxyDesign(
         )
         val sortMode = context.getString(
             when (autoSelectSort) {
-                AutoSelectSort.Global -> R.string.sort_global_short
+                AutoSelectSort.All -> R.string.sort_global_short
                 AutoSelectSort.Region -> R.string.sort_region_short
             }
         )
@@ -312,31 +317,23 @@ class ProxyDesign(
         popup.show()
     }
 
-    private fun showSortModeMenu() {
-        val popup = PopupMenu(context, binding.sortModeView)
-
-        popup.menuInflater.inflate(R.menu.menu_auto_select_sort, popup.menu)
-        popup.menu.findItem(R.id.auto_sort_global).isChecked =
-            autoSelectSort == AutoSelectSort.Global
-        popup.menu.findItem(R.id.auto_sort_region).isChecked =
-            autoSelectSort == AutoSelectSort.Region
-
-        popup.setOnMenuItemClickListener {
-            when (it.itemId) {
-                R.id.auto_sort_global -> autoSelectSort = AutoSelectSort.Global
-                R.id.auto_sort_region -> autoSelectSort = AutoSelectSort.Region
-                else -> return@setOnMenuItemClickListener false
-            }
-
-            updateAutoSelectButtonText()
-            autoSelectPosition().takeIf { it >= 0 }?.let {
-                requests.trySend(Request.Reload(it, scrollToTop = true))
-            }
-
-            true
+    private fun toggleSortMode() {
+        autoSelectSort = when (autoSelectSort) {
+            AutoSelectSort.All -> AutoSelectSort.Region
+            AutoSelectSort.Region -> AutoSelectSort.All
         }
 
-        popup.show()
+        updateAutoSelectButtonText()
+        autoSelectPosition().takeIf { it >= 0 }?.let {
+            requests.trySend(
+                Request.Reload(
+                    index = it,
+                    scrollToTop = true,
+                    metric = autoSelectMetric,
+                    sort = autoSelectSort,
+                )
+            )
+        }
     }
 
     fun requestUrlTesting() {
