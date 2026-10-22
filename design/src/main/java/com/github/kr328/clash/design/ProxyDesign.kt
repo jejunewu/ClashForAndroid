@@ -3,8 +3,11 @@ package com.github.kr328.clash.design
 import android.content.Context
 import android.content.res.ColorStateList
 import android.view.View
+import android.widget.ArrayAdapter
+import android.widget.ListView
 import android.widget.Toast
-import androidx.appcompat.widget.PopupMenu
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.appcompat.widget.ListPopupWindow
 import androidx.viewpager2.widget.ViewPager2
 import com.github.kr328.clash.core.model.Proxy
 import com.github.kr328.clash.core.model.TunnelState
@@ -19,6 +22,7 @@ import com.github.kr328.clash.design.util.applyFrom
 import com.github.kr328.clash.design.util.getPixels
 import com.github.kr328.clash.design.util.layoutInflater
 import com.github.kr328.clash.design.util.resolveThemedColor
+import com.github.kr328.clash.design.util.resolveThemedResourceId
 import com.github.kr328.clash.design.util.root
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.tabs.TabLayoutMediator
@@ -175,7 +179,7 @@ class ProxyDesign(
         }
 
         binding.sortModeView.setOnClickListener {
-            toggleSortMode()
+            showSortModeMenu()
         }
 
         if (pageNames.isEmpty()) {
@@ -288,52 +292,101 @@ class ProxyDesign(
     }
 
     private fun showTestModeMenu() {
-        val popup = PopupMenu(context, binding.testModeView)
+        val metrics = AutoSelectMetric.values()
+        val labels = metrics.map(::testModeLabel)
 
-        popup.menuInflater.inflate(R.menu.menu_auto_select_test, popup.menu)
-        popup.menu.findItem(R.id.auto_test_download).isChecked =
-            autoSelectMetric == AutoSelectMetric.Download
-        popup.menu.findItem(R.id.auto_test_upload).isChecked =
-            autoSelectMetric == AutoSelectMetric.Upload
-        popup.menu.findItem(R.id.auto_test_delay).isChecked =
-            autoSelectMetric == AutoSelectMetric.Delay
-
-        popup.setOnMenuItemClickListener {
-            when (it.itemId) {
-                R.id.auto_test_download -> autoSelectMetric = AutoSelectMetric.Download
-                R.id.auto_test_upload -> autoSelectMetric = AutoSelectMetric.Upload
-                R.id.auto_test_delay -> autoSelectMetric = AutoSelectMetric.Delay
-                else -> return@setOnMenuItemClickListener false
-            }
-
+        showSelectionMenu(
+            anchor = binding.testModeView,
+            labels = labels,
+            selectedIndex = autoSelectMetric.ordinal,
+        ) { index ->
+            autoSelectMetric = metrics[index]
             updateAutoSelectButtonText()
             autoSelectPosition().takeIf { it >= 0 }?.let {
-                requests.trySend(Request.Reload(it, scrollToTop = true))
+                requests.trySend(
+                    Request.Reload(
+                        index = it,
+                        scrollToTop = true,
+                        metric = autoSelectMetric,
+                        sort = autoSelectSort,
+                    )
+                )
             }
-
-            true
         }
-
-        popup.show()
     }
 
-    private fun toggleSortMode() {
-        autoSelectSort = when (autoSelectSort) {
-            AutoSelectSort.All -> AutoSelectSort.Region
-            AutoSelectSort.Region -> AutoSelectSort.All
-        }
+    private fun showSortModeMenu() {
+        val sorts = AutoSelectSort.values()
+        val labels = sorts.map(::sortModeLabel)
 
-        updateAutoSelectButtonText()
-        autoSelectPosition().takeIf { it >= 0 }?.let {
-            requests.trySend(
-                Request.Reload(
-                    index = it,
-                    scrollToTop = true,
-                    metric = autoSelectMetric,
-                    sort = autoSelectSort,
+        showSelectionMenu(
+            anchor = binding.sortModeView,
+            labels = labels,
+            selectedIndex = autoSelectSort.ordinal,
+        ) { index ->
+            autoSelectSort = sorts[index]
+            updateAutoSelectButtonText()
+            autoSelectPosition().takeIf { it >= 0 }?.let {
+                requests.trySend(
+                    Request.Reload(
+                        index = it,
+                        scrollToTop = true,
+                        metric = autoSelectMetric,
+                        sort = autoSelectSort,
+                    )
                 )
-            )
+            }
         }
+    }
+
+    private fun showSelectionMenu(
+        anchor: View,
+        labels: List<String>,
+        selectedIndex: Int,
+        onSelected: (Int) -> Unit,
+    ) {
+        val popup = ListPopupWindow(context)
+        val density = context.resources.displayMetrics.density
+
+        popup.anchorView = anchor
+        popup.setAdapter(
+            ArrayAdapter(context, android.R.layout.simple_list_item_single_choice, labels)
+        )
+        popup.setContentWidth(maxOf(anchor.width, (168 * density).toInt()))
+        popup.verticalOffset = (4 * density).toInt()
+        popup.isModal = true
+        context.resolveThemedResourceId(android.R.attr.popupBackground)
+            .takeIf { it != 0 }
+            ?.let { popup.setBackgroundDrawable(AppCompatResources.getDrawable(context, it)) }
+        popup.setOnItemClickListener { _, _, position, _ ->
+            popup.dismiss()
+            onSelected(position)
+        }
+        popup.show()
+
+        popup.listView?.apply {
+            choiceMode = ListView.CHOICE_MODE_SINGLE
+            setItemChecked(selectedIndex, true)
+        }
+    }
+
+    private fun testModeLabel(metric: AutoSelectMetric): String {
+        return context.getString(
+            when (metric) {
+                AutoSelectMetric.Download -> R.string.speed_test_download
+                AutoSelectMetric.Upload -> R.string.speed_test_upload
+                AutoSelectMetric.Delay -> R.string.speed_test_latency
+            }
+        )
+    }
+
+    private fun sortModeLabel(sort: AutoSelectSort): String {
+        return context.getString(
+            when (sort) {
+                AutoSelectSort.All -> R.string.sort_global
+                AutoSelectSort.Region -> R.string.sort_region
+            }
+        )
     }
 
     fun requestUrlTesting() {

@@ -260,9 +260,9 @@
     <string name="delay_test">Delay Test</string>
     <string name="auto_select_proxy">Auto Select</string>
     <string name="auto_select_test_mode">Test mode · %1$s ▾</string>
-    <string name="auto_select_sort_mode">Sort · %1$s ⇄</string>
+    <string name="auto_select_sort_mode">Sort · %1$s ▾</string>
     <string name="auto_select_test_mode_default">Test mode · Download ▾</string>
-    <string name="auto_select_sort_mode_default">Sort · All ⇄</string>
+    <string name="auto_select_sort_mode_default">Sort · All ▾</string>
     <string name="speed_test_download">Download speed</string>
     <string name="speed_test_upload">Upload speed</string>
     <string name="speed_test_latency">Latency</string>

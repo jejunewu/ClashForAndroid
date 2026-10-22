@@ -113,9 +113,10 @@ jobs:
           - 【代理】新增“自动选择代理”
           - 支持下载速度、上传速度、延迟三种测速方式
           - 并发测速，整体时间控制在 30 秒内
-          - 支持全部排序与区域排序，可一键切换
+          - 测速方式与排序均使用下拉选择框
+          - 支持全部排序与区域排序
           - 节点单行展示，同区域使用相同背景色
-          - 修复排序模式未实际生效的问题
+          - 修复测速方式标签未更新、排序模式未生效的问题
 
           ### 安装说明
           - 最低支持 Android 5.0。
@@ -124,7 +125,10 @@ jobs:
           )"
 
           if gh release view "$tag" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            git tag -f "$tag" "$GITHUB_SHA"
+            git push --force origin "refs/tags/$tag"
             gh release upload "$tag" release/* -R "$GITHUB_REPOSITORY" --clobber
+            gh release edit "$tag" -R "$GITHUB_REPOSITORY" --notes "$notes"
           else
             gh release create "$tag" release/* \
               -R "$GITHUB_REPOSITORY" \
