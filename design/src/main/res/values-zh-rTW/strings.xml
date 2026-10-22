@@ -186,6 +186,10 @@
     <string name="save">儲存</string>
     <string name="delay_test">延遲測試</string>
     <string name="auto_select_proxy">自動選擇代理</string>
+    <string name="auto_select_test_mode">測速方式 · %1$s ▾</string>
+    <string name="auto_select_sort_mode">排序 · %1$s ▾</string>
+    <string name="auto_select_test_mode_default">測速方式 · 下載 ▾</string>
+    <string name="auto_select_sort_mode_default">排序 · 全域 ▾</string>
     <string name="speed_test_download">下載速度</string>
     <string name="speed_test_upload">上傳速度</string>
     <string name="speed_test_latency">延遲</string>

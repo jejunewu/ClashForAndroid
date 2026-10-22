@@ -50,44 +50,7 @@
                         android:layout_height="wrap_content"
                         android:layout_alignParentStart="true"
                         android:layout_centerVertical="true"
-                        android:layout_toStartOf="@id/auto_select_controls" />
-
-                    <LinearLayout
-                        android:id="@+id/auto_select_controls"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerVertical="true"
-                        android:layout_toStartOf="@id/url_test_layout"
-                        android:orientation="horizontal"
-                        android:visibility="gone">
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/test_mode_view"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:contentDescription="@string/speed_test_download"
-                            android:minWidth="0dp"
-                            android:minHeight="0dp"
-                            android:paddingStart="6dp"
-                            android:paddingEnd="6dp"
-                            android:text="@string/speed_test_download_short"
-                            android:textSize="12sp" />
-
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/sort_mode_view"
-                            style="@style/Widget.MaterialComponents.Button.TextButton"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:contentDescription="@string/sort_global"
-                            android:minWidth="0dp"
-                            android:minHeight="0dp"
-                            android:paddingStart="6dp"
-                            android:paddingEnd="6dp"
-                            android:text="@string/sort_global_short"
-                            android:textSize="12sp" />
-
-                    </LinearLayout>
+                        android:layout_toStartOf="@id/url_test_layout" />
 
                     <FrameLayout
                         android:id="@+id/url_test_layout"
@@ -142,6 +105,70 @@
                 android:background="?android:windowBackground"
                 app:tabBackground="@android:color/transparent"
                 app:tabMode="scrollable" />
+
+            <LinearLayout
+                android:id="@+id/auto_select_controls"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/auto_select_controls_height"
+                android:background="?android:windowBackground"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:visibility="gone">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/test_mode_view"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/speed_test_download"
+                    android:elevation="0dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:letterSpacing="0"
+                    android:maxLines="1"
+                    android:minWidth="0dp"
+                    android:minHeight="34dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:stateListAnimator="@null"
+                    android:text="@string/auto_select_test_mode_default"
+                    android:textAllCaps="false"
+                    android:textColor="?attr/colorControlNormal"
+                    android:textSize="12sp"
+                    app:backgroundTint="@android:color/transparent"
+                    app:cornerRadius="17dp"
+                    app:strokeColor="?attr/colorControlNormal"
+                    app:strokeWidth="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/sort_mode_view"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:contentDescription="@string/sort_global"
+                    android:elevation="0dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:letterSpacing="0"
+                    android:maxLines="1"
+                    android:minWidth="0dp"
+                    android:minHeight="34dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:stateListAnimator="@null"
+                    android:text="@string/auto_select_sort_mode_default"
+                    android:textAllCaps="false"
+                    android:textColor="?attr/colorControlNormal"
+                    android:textSize="12sp"
+                    app:backgroundTint="@android:color/transparent"
+                    app:cornerRadius="17dp"
+                    app:strokeColor="?attr/colorControlNormal"
+                    app:strokeWidth="1dp" />
+
+            </LinearLayout>
 
             <View
                 android:id="@+id/elevation_view"

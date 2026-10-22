@@ -20,10 +20,15 @@ class ProxyViewState(
     val rect = Rect()
     val path = Path()
 
+    val oneLine: Boolean = proxy.speedTested
     var title: String = ""
     var subtitle: String = ""
     var delayText: String = ""
-    var background: Int = config.unselectedBackground
+    var background: Int = if (oneLine) {
+        config.regionBackground(proxy.region)
+    } else {
+        config.unselectedBackground
+    }
     var controls: Int = config.unselectedControl
 
     private var delay: Int = Int.MIN_VALUE
@@ -33,26 +38,30 @@ class ProxyViewState(
 
     private var lastFrameTime = System.currentTimeMillis()
 
-    private val autoTitle: String? =
-        if (proxy.speedTested) proxy.title.ifEmpty { proxy.name } else null
-    private val autoSubtitle: String? =
-        if (proxy.speedTested) {
-            "%s · ↓%s ↑%s".format(
-                proxy.region.ifEmpty { "--" },
-                formatSpeed(proxy.download),
-                formatSpeed(proxy.upload)
-            )
-        } else {
-            null
+    private val autoTitle: String = if (oneLine) {
+        buildString {
+            append(proxy.title.ifEmpty { proxy.name })
+            append("  ·  ")
+            append(proxy.region.ifEmpty { "其他" })
+            append("   ↓")
+            append(formatSpeed(proxy.download))
+            append("   ↑")
+            append(formatSpeed(proxy.upload))
         }
+    } else {
+        ""
+    }
+
+    val isSelected: Boolean
+        get() = selected
 
     fun update(snap: Boolean): Boolean {
         val frameTime = System.currentTimeMillis()
         var invalidate = false
 
-        if (autoSubtitle != null) {
-            title = autoTitle ?: proxy.name
-            subtitle = autoSubtitle
+        if (oneLine) {
+            title = autoTitle
+            subtitle = ""
         } else if (proxy.type.group) {
             title = proxy.name
 
@@ -89,12 +98,16 @@ class ProxyViewState(
             selected = proxy.name == parent.now
         }
 
-        controls = if (selected) config.selectedControl else config.unselectedControl
+        controls = when {
+            selected && oneLine -> config.selectedAccent
+            selected -> config.selectedControl
+            else -> config.unselectedControl
+        }
 
         if (snap) {
-            background = if (selected) config.selectedBackground else config.unselectedBackground
+            background = targetBackground()
         } else {
-            val target = if (selected) config.selectedBackground else config.unselectedBackground
+            val target = targetBackground()
 
             if (background != target) {
                 val sa = Color.alpha(background)
@@ -146,6 +159,14 @@ class ProxyViewState(
         lastFrameTime = frameTime
 
         return invalidate
+    }
+
+    private fun targetBackground(): Int {
+        return when {
+            oneLine -> config.regionBackground(proxy.region)
+            selected -> config.selectedBackground
+            else -> config.unselectedBackground
+        }
     }
 
     private fun formatSpeed(bytesPerSecond: Long): String {

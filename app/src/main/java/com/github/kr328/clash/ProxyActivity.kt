@@ -81,6 +81,10 @@ class ProxyActivity : BaseActivity<ProxyDesign>() {
                             finish()
                         }
                         ProxyDesign.Request.ReloadAll -> {
+                            if (hasAutoPage) {
+                                design.requests.trySend(ProxyDesign.Request.Reload(0))
+                            }
+
                             names.indices.forEach { idx ->
                                 design.requests.trySend(
                                     ProxyDesign.Request.Reload(idx + groupPageOffset)
@@ -106,7 +110,8 @@ class ProxyActivity : BaseActivity<ProxyDesign>() {
                                         true,
                                         autoState,
                                         unorderedStates,
-                                        finishTesting = false
+                                        finishTesting = false,
+                                        scrollToTop = request.scrollToTop,
                                     )
                                 }
                             } else if (groupIndex in names.indices) {
@@ -184,7 +189,7 @@ class ProxyActivity : BaseActivity<ProxyDesign>() {
                                         true,
                                         autoState,
                                         unorderedStates,
-                                        finishTesting = false
+                                        finishTesting = false,
                                     )
 
                                     val group = withClash { speedTest(mode) }
@@ -199,7 +204,8 @@ class ProxyActivity : BaseActivity<ProxyDesign>() {
                                         sorted,
                                         true,
                                         autoState,
-                                        unorderedStates
+                                        unorderedStates,
+                                        scrollToTop = true,
                                     )
 
                                     val best = sorted.firstOrNull { isValidMetric(it, metric) }

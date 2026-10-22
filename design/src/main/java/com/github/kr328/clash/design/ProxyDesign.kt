@@ -16,6 +16,7 @@ import com.github.kr328.clash.design.databinding.DesignProxyBinding
 import com.github.kr328.clash.design.model.ProxyState
 import com.github.kr328.clash.design.store.UiStore
 import com.github.kr328.clash.design.util.applyFrom
+import com.github.kr328.clash.design.util.getPixels
 import com.github.kr328.clash.design.util.layoutInflater
 import com.github.kr328.clash.design.util.resolveThemedColor
 import com.github.kr328.clash.design.util.root
@@ -47,7 +48,7 @@ class ProxyDesign(
         object ReLaunch : Request()
 
         data class PatchMode(val mode: TunnelState.Mode?) : Request()
-        data class Reload(val index: Int) : Request()
+        data class Reload(val index: Int, val scrollToTop: Boolean = false) : Request()
         data class Select(val index: Int, val name: String) : Request()
         data class UrlTest(val index: Int) : Request()
     }
@@ -72,8 +73,6 @@ class ProxyDesign(
     var autoSelectSort: AutoSelectSort = AutoSelectSort.Global
         private set
 
-    private var autoSelectTested = false
-
     private var horizontalScrolling = false
     private val verticalBottomScrolled: Boolean
         get() = adapter.states.getOrNull(binding.pagesView.currentItem)?.bottom ?: false
@@ -91,9 +90,14 @@ class ProxyDesign(
         selectable: Boolean,
         parent: ProxyState,
         links: Map<String, ProxyState>,
-        finishTesting: Boolean = true
+        finishTesting: Boolean = true,
+        scrollToTop: Boolean = false,
     ) {
         adapter.updateAdapter(position, proxies, selectable, parent, links)
+
+        if (scrollToTop) {
+            adapter.scrollToTop(position)
+        }
 
         if (finishTesting) {
             adapter.states[position].urlTesting = false
@@ -186,6 +190,10 @@ class ProxyDesign(
                 val pageConfigs = pageNames.map {
                     if (it == AUTO_SELECT_GROUP) autoConfig else config
                 }
+                val autoControlsHeight = context.getPixels(R.dimen.auto_select_controls_height)
+                val pageTopInsets = pageNames.map {
+                    if (it == AUTO_SELECT_GROUP) autoControlsHeight else 0
+                }
 
                 adapter = ProxyPageAdapter(
                     surface,
@@ -194,7 +202,8 @@ class ProxyDesign(
                         ProxyAdapter(pageConfigs[index]) { name ->
                             requests.trySend(Request.Select(index, name))
                         }
-                    }
+                    },
+                    pageTopInsets,
                 ) {
                     if (it == currentItem)
                         updateUrlTestButtonStatus()
@@ -212,12 +221,8 @@ class ProxyDesign(
 
                         updateAutoSelectControls()
 
-                        if (position == autoSelectPosition() && !autoSelectTested) {
-                            autoSelectTested = true
-
-                            binding.pagesView.post {
-                                requestUrlTesting()
-                            }
+                        if (position == autoSelectPosition()) {
+                            requests.trySend(Request.Reload(position))
                         }
                     }
                 })
@@ -235,12 +240,6 @@ class ProxyDesign(
                     binding.pagesView.setCurrentItem(initialPosition, false)
 
                 updateAutoSelectControls()
-
-                if (initialPosition == autoSelectPosition() && !autoSelectTested) {
-                    autoSelectTested = true
-
-                    requestUrlTesting()
-                }
             }
         }
     }
@@ -265,20 +264,22 @@ class ProxyDesign(
     }
 
     private fun updateAutoSelectButtonText() {
-        binding.testModeView.text = context.getString(
+        val testMode = context.getString(
             when (autoSelectMetric) {
                 AutoSelectMetric.Download -> R.string.speed_test_download_short
                 AutoSelectMetric.Upload -> R.string.speed_test_upload_short
                 AutoSelectMetric.Delay -> R.string.speed_test_latency_short
             }
         )
-
-        binding.sortModeView.text = context.getString(
+        val sortMode = context.getString(
             when (autoSelectSort) {
                 AutoSelectSort.Global -> R.string.sort_global_short
                 AutoSelectSort.Region -> R.string.sort_region_short
             }
         )
+
+        binding.testModeView.text = context.getString(R.string.auto_select_test_mode, testMode)
+        binding.sortModeView.text = context.getString(R.string.auto_select_sort_mode, sortMode)
     }
 
     private fun showTestModeMenu() {
@@ -301,7 +302,9 @@ class ProxyDesign(
             }
 
             updateAutoSelectButtonText()
-            requestUrlTesting()
+            autoSelectPosition().takeIf { it >= 0 }?.let {
+                requests.trySend(Request.Reload(it, scrollToTop = true))
+            }
 
             true
         }
@@ -326,7 +329,9 @@ class ProxyDesign(
             }
 
             updateAutoSelectButtonText()
-            requests.trySend(Request.Reload(autoSelectPosition()))
+            autoSelectPosition().takeIf { it >= 0 }?.let {
+                requests.trySend(Request.Reload(it, scrollToTop = true))
+            }
 
             true
         }
@@ -353,6 +358,11 @@ class ProxyDesign(
 
     private fun updateUrlTestButtonStatus() {
         updateAutoSelectControls()
+
+        val controlsEnabled = !urlTesting
+        binding.testModeView.isEnabled = controlsEnabled
+        binding.sortModeView.isEnabled = controlsEnabled
+        binding.autoSelectControls.alpha = if (controlsEnabled) 1f else 0.55f
 
         if (verticalBottomScrolled || horizontalScrolling || urlTesting) {
             binding.urlTestFloatView.hide()

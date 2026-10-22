@@ -9,12 +9,15 @@ import com.github.kr328.clash.design.util.resolveThemedResourceId
 
 class ProxyViewConfig(val context: Context, var singleLine: Boolean) {
     private val colorSurface = context.resolveThemedColor(R.attr.colorSurface)
+    private val regionColorCache = mutableMapOf<String, Int>()
+    private val darkTheme = relativeLuminance(colorSurface) < 0.5f
 
     val clickableBackground =
         context.resolveThemedResourceId(android.R.attr.selectableItemBackground)
 
     val selectedControl = context.resolveThemedColor(R.attr.colorOnPrimary)
     val selectedBackground = context.resolveThemedColor(R.attr.colorPrimary)
+    val selectedAccent = context.resolveThemedColor(R.attr.colorPrimary)
 
     val unselectedControl = context.resolveThemedColor(R.attr.colorOnSurface)
     val unselectedBackground: Int
@@ -34,4 +37,28 @@ class ProxyViewConfig(val context: Context, var singleLine: Boolean) {
 
     val cardRadius = context.getPixels(R.dimen.proxy_card_radius).toFloat()
     var cardOffset = context.getPixels(R.dimen.proxy_card_offset).toFloat()
+
+    val selectionIndicatorWidth = 3f * context.resources.displayMetrics.density
+    val selectionIndicatorInset = 8f * context.resources.displayMetrics.density
+
+    fun regionBackground(region: String): Int {
+        val key = region.ifBlank { "其他" }
+        return regionColorCache.getOrPut(key) {
+            if (key == "其他") {
+                return@getOrPut if (darkTheme) 0xFF2B2B2B.toInt() else 0xFFEFEFEF.toInt()
+            }
+
+            val hue = ((key.hashCode() % 360) + 360) % 360
+            val saturation = if (darkTheme) 0.38f else 0.20f
+            val value = if (darkTheme) 0.27f else 0.98f
+
+            Color.HSVToColor(floatArrayOf(hue.toFloat(), saturation, value))
+        }
+    }
+
+    private fun relativeLuminance(color: Int): Float {
+        return (0.2126f * Color.red(color) +
+                0.7152f * Color.green(color) +
+                0.0722f * Color.blue(color)) / 255f
+    }
 }

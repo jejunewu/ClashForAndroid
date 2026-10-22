@@ -70,6 +70,7 @@
     <dimen name="proxy_text_size">12sp</dimen>
     <dimen name="proxy_card_radius">5dp</dimen>
     <dimen name="proxy_card_offset">0dp</dimen>
+    <dimen name="auto_select_controls_height">50dp</dimen>
 
     <!-- Properties Design -->
     <dimen name="properties_element_margin_vertical">2.5dp</dimen>

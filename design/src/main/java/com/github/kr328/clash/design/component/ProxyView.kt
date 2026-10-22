@@ -40,10 +40,16 @@ class ProxyView(
         }
 
         val textHeight = state.rect.height()
-        val exceptHeight = (state.config.layoutPadding * 2 +
-                state.config.contentPadding * 2 +
-                textHeight * 2 +
-                state.config.textMargin).toInt()
+        val exceptHeight = if (state.oneLine) {
+            (state.config.layoutPadding * 2 +
+                    state.config.contentPadding * 2 +
+                    textHeight).toInt()
+        } else {
+            (state.config.layoutPadding * 2 +
+                    state.config.contentPadding * 2 +
+                    textHeight * 2 +
+                    state.config.textMargin).toInt()
+        }
 
         val height = when (MeasureSpec.getMode(heightMeasureSpec)) {
             MeasureSpec.UNSPECIFIED ->
@@ -166,6 +172,24 @@ class ProxyView(
         paint.isAntiAlias = true
         paint.color = state.controls
 
+        if (state.oneLine && state.isSelected) {
+            val left = state.config.layoutPadding + state.config.selectionIndicatorInset
+            val top = state.config.layoutPadding + state.config.contentPadding / 2
+            val right = left + state.config.selectionIndicatorWidth
+            val bottom = height - top
+
+            paint.style = Paint.Style.FILL
+            canvas.drawRoundRect(
+                left,
+                top,
+                right,
+                bottom,
+                state.config.selectionIndicatorWidth,
+                state.config.selectionIndicatorWidth,
+                paint,
+            )
+        }
+
         // draw delay
         canvas.apply {
             val x = width - state.config.layoutPadding - state.config.contentPadding - delayWidth
@@ -177,19 +201,25 @@ class ProxyView(
         // draw title
         canvas.apply {
             val x = state.config.layoutPadding + state.config.contentPadding
-            val y = state.config.layoutPadding +
-                    (height - state.config.layoutPadding * 2) / 3f - textOffset
+            val y = if (state.oneLine) {
+                height / 2f - textOffset
+            } else {
+                state.config.layoutPadding +
+                        (height - state.config.layoutPadding * 2) / 3f - textOffset
+            }
 
             drawText(state.title, 0, titleCount, x, y, paint)
         }
 
         // draw subtitle
-        canvas.apply {
-            val x = state.config.layoutPadding + state.config.contentPadding
-            val y = state.config.layoutPadding +
-                    (height - state.config.layoutPadding * 2) / 3f * 2 - textOffset
+        if (!state.oneLine) {
+            canvas.apply {
+                val x = state.config.layoutPadding + state.config.contentPadding
+                val y = state.config.layoutPadding +
+                        (height - state.config.layoutPadding * 2) / 3f * 2 - textOffset
 
-            drawText(state.subtitle, 0, subtitleCount, x, y, paint)
+                drawText(state.subtitle, 0, subtitleCount, x, y, paint)
+            }
         }
     }
 }

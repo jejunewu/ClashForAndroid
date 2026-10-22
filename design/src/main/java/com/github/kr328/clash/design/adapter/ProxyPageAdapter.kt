@@ -18,6 +18,7 @@ class ProxyPageAdapter(
     private val surface: Surface,
     private val configs: List<ProxyViewConfig>,
     private val adapters: List<ProxyAdapter>,
+    private val topInsets: List<Int>,
     private val stateChanged: (Int) -> Unit,
 ) : RecyclerView.Adapter<ProxyPageFactory.Holder>() {
     private val factories = configs.map { ProxyPageFactory(it) }
@@ -59,6 +60,14 @@ class ProxyPageAdapter(
         holder.recyclerView.invalidateChildren()
     }
 
+    fun scrollToTop(position: Int) {
+        parent?.post {
+            (parent?.findViewHolderForAdapterPosition(position) as? ProxyPageFactory.Holder)
+                ?.recyclerView
+                ?.scrollToPosition(0)
+        }
+    }
+
     override fun getItemViewType(position: Int): Int {
         return position
     }
@@ -70,7 +79,7 @@ class ProxyPageAdapter(
         val toolbarHeight = config.context.getPixels(R.dimen.toolbar_height)
         val tabHeight = config.context.getPixels(R.dimen.tab_layout_height)
 
-        holder.recyclerView.bindInsets(surface, toolbarHeight + tabHeight)
+        holder.recyclerView.bindInsets(surface, toolbarHeight + tabHeight + topInsets[viewType])
         holder.recyclerView.addScrolledToBottomObserver { view, bottom ->
             val position = view.position
             val state = states[position]
